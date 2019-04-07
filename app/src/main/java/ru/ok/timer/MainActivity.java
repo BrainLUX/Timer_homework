@@ -11,12 +11,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,15 +31,48 @@ public class MainActivity extends AppCompatActivity {
     int Seconds, Minutes, MilliSeconds;
     private int counter = 0;
     private boolean hidden;
+    private SharedPreferences sp;
+    public static final String SP_NAME = "timer";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sp = getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
         timer = findViewById(R.id.timer);
         initButtons();
         registerBroadcastReceiver();
+        getExtra();
         hidden = false;
+    }
+
+    private void getExtra() {
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            StartTime = Long.parseLong(sp.getString("StartTime", "0"));
+            mode = Byte.parseByte(sp.getString("mode", "1"));
+            TimeBuff = Long.parseLong(sp.getString("TimeBuff", "0"));
+//            if(StartTime!=0){
+//                timer.setText(secondsToTime(System.currentTimeMillis() - StartTime));
+//                startService(new Intent(MainActivity.this, Timer.class));
+//                reset.setEnabled(false);
+//                mode = -1;
+//                startStop.setText("Stop");
+//            }
+            Log.d("", "reset: " + StartTime);
+            if (StartTime != 0) {
+                if (mode == -1) {
+                    timer.setText(secondsToTime(TimeBuff + System.currentTimeMillis() - StartTime));
+                    startService(new Intent(MainActivity.this, Timer.class));
+                    reset.setEnabled(false);
+                    startStop.setText("Stop");
+                } else {
+                    timer.setText(secondsToTime(TimeBuff));
+                }
+            }
+        } else {
+            sp.edit().clear().apply();
+        }
     }
 
     private void initButtons() {
@@ -59,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void switchMode() {
         mode *= -1;
+        sp.edit().putString("mode", String.valueOf(mode)).apply();
         if (mode == -1) {
             start();
 
@@ -69,19 +105,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stop() {
+        reset.setEnabled(true);
         stopService(new Intent(MainActivity.this, Timer.class));
-        startStop.setText("Start");
         TimeBuff += MillisecondTime;
+        sp.edit().putString("TimeBuff", String.valueOf(TimeBuff)).apply();
+        startStop.setText("Start");
     }
 
     private void start() {
-        StartTime = SystemClock.uptimeMillis();
+        reset.setEnabled(false);
+        StartTime = System.currentTimeMillis();
+        sp.edit().putString("StartTime", String.valueOf(StartTime)).apply();
         startService(new Intent(MainActivity.this, Timer.class));
         startStop.setText("Stop");
     }
 
     private void reset() {
-        switchMode();
         MillisecondTime = 0L;
         StartTime = 0L;
         TimeBuff = 0L;
@@ -89,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         Seconds = 0;
         Minutes = 0;
         MilliSeconds = 0;
-
+        sp.edit().clear().apply();
         timer.setText("00:00:000");
     }
 
@@ -97,7 +136,10 @@ public class MainActivity extends AppCompatActivity {
     public void registerBroadcastReceiver() {
         this.registerReceiver(timerReceiver, new IntentFilter(
                 "increaseTimer"));
+    }
 
+    public void unregisterBroadcastReceiver() {
+        this.unregisterReceiver(timerReceiver);
     }
 
     private class TimerReceiver extends BroadcastReceiver {
@@ -108,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mode == -1) {
-                MillisecondTime = SystemClock.uptimeMillis() - StartTime;
+                MillisecondTime = System.currentTimeMillis() - StartTime;
                 UpdateTime = TimeBuff + MillisecondTime;
                 timer.setText(secondsToTime(UpdateTime));
                 counter++;
@@ -164,4 +206,12 @@ public class MainActivity extends AppCompatActivity {
         notificationManager.cancel(1);
         super.onResume();
     }
+
+    @Override
+    protected void onDestroy() {
+        unregisterBroadcastReceiver();
+        getIntent().putExtra("refresh", 1);
+        super.onDestroy();
+    }
+
 }
