@@ -2,6 +2,7 @@ package ru.ok.timer;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -9,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -45,24 +47,25 @@ public class MainActivity extends AppCompatActivity {
     private final String STOP_ACTION = "stop";
     private final String START_ACTION = "start";
     private final String RESET_ACTION = "reset";
-    PendingIntent resultPendingIntent;
-    PendingIntent resultStopIntent;
-    PendingIntent resultStartIntent;
-    PendingIntent resultResetIntent;
+    private PendingIntent resultPendingIntent;
+    private PendingIntent resultStopIntent;
+    private PendingIntent resultStartIntent;
+    private PendingIntent resultResetIntent;
+    private final String TIMER_ID = "timer";
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sp = getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
-        timer = findViewById(R.id.timer);
         timerReceiver = new TimerReceiver();
         notifyReceiver = new NotifyReceiver();
-        initButtons();
+        initUI();
         registerBroadcastReceiver();
         getExtra();
-        hidden = false;
         setIntents();
+        createNotificationChannel();
     }
 
     private void setIntents() {
@@ -88,10 +91,12 @@ public class MainActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             startTime = Long.parseLong(sp.getString(STARTTIME_KEY, "0"));
-            mode = Byte.parseByte(sp.getString(MODE_KEY, "1"));
+            mode = Byte.parseByte(sp.getString(MODE_KEY, "0"));
             timeBuff = Long.parseLong(sp.getString(TIMEBUFF_KEY, "0"));
             inputTime = Long.parseLong(sp.getString(INPUTTIME_KEY, "0"));
-            timer.setEnabled(false);
+            if (mode != 0) {
+                timer.setEnabled(false);
+            }
             if (startTime != 0) {
                 if (mode == 1) {
                     timer.setText(secondsToTime(timeBuff + System.currentTimeMillis() - startTime));
@@ -107,7 +112,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initButtons() {
+    private void initUI() {
+        timer = findViewById(R.id.timer);
         startStop = findViewById(R.id.btn_start_stop);
         startStop.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,8 +150,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void start() {
-        if (mode == 0)
+        if (mode == 0) {
             inputTime = timeToSeconds(timer.getText().toString());
+        }
         mode = 1;
         reset.setEnabled(false);
         startTime = System.currentTimeMillis();
@@ -202,7 +209,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (inputTime - updateTime <= 0) {
                     mode = 1;
-                    createNotification(true);
+                    if (hidden) {
+                        createNotification(true);
+                    }
                     stop();
                     reset();
                     timer.setText(secondsToTime(inputTime));
@@ -213,14 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
     private class NotifyReceiver extends BroadcastReceiver {
         public NotifyReceiver() {
-
         }
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
             Bundle extras = intent.getExtras();
-            if (extras != null)
+            if (extras != null) {
                 switch (extras.getString("action")) {
                     case STOP_ACTION:
                         stop();
@@ -232,9 +239,10 @@ public class MainActivity extends AppCompatActivity {
                     case RESET_ACTION:
                         stop();
                         reset();
+                        startActivity(new Intent(context, MainActivity.class));
                         break;
                 }
-            startActivity(new Intent(context, MainActivity.class));
+            }
         }
     }
 
@@ -242,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
         String notifyText = timer.getText().toString();
         notifyText = notifyText.substring(0, notifyText.length() - 4);
         NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
+                new NotificationCompat.Builder(this, TIMER_ID)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle(!paused ? "Таймер запущен" : "Таймер на паузе")
                         .setContentText(notifyText)
@@ -250,9 +258,21 @@ public class MainActivity extends AppCompatActivity {
                         .addAction(R.mipmap.ic_launcher, "Reset", resultResetIntent)
                         .setContentIntent(resultPendingIntent);
         Notification notification = builder.build();
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(1, notification);
+    }
+
+    private void createNotificationChannel() {
+        notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Log.d("", "createNotificationChannel: ");
+            CharSequence name = "timer";
+            String description = "time";
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel(TIMER_ID, name, importance);
+            channel.setDescription(description);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
 
@@ -273,15 +293,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         hidden = true;
+        if (mode == -1) {
+            createNotification(true);
+        }
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         hidden = false;
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(1);
+        notificationManager.cancelAll();
         super.onResume();
     }
 
@@ -289,9 +310,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         unregisterBroadcastReceiver();
         getIntent().putExtra("refresh", 1);
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.cancel(1);
+        notificationManager.cancelAll();
         super.onDestroy();
     }
 

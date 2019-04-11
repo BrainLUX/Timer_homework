@@ -9,28 +9,27 @@ public class Timer extends Service {
     private boolean run;
     private Intent intent;
 
-
     public void onCreate() {
         super.onCreate();
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        run = true;
-        someTask();
         this.intent = new Intent("increaseTimer");
+        run = true;
+        doWork();
         return super.onStartCommand(intent, flags, startId);
     }
 
     public void onDestroy() {
-        super.onDestroy();
         run = false;
+        super.onDestroy();
     }
 
     public IBinder onBind(Intent intent) {
         return null;
     }
 
-    void someTask() {
+    void doWork() {
         final Handler handler = new Handler();
         handler.post(new Runnable() {
             @Override
