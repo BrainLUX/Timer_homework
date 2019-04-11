@@ -6,10 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <EditText
         android:id="@+id/timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="time"
         android:text="00:00:000"
         android:textSize="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
