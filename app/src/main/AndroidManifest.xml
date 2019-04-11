@@ -13,7 +13,7 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <service
-            android:name=".Timer"
+            android:name=".TimerService"
             android:enabled="true" />
 
         <activity

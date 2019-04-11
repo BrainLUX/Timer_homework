@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             if (startTime != 0) {
                 if (mode == 1) {
                     timer.setText(secondsToTime(timeBuff + System.currentTimeMillis() - startTime));
-                    startService(new Intent(MainActivity.this, Timer.class));
+                    startService(new Intent(MainActivity.this, TimerService.class));
                     reset.setEnabled(false);
                     startStop.setText("Stop");
                 } else {
@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     private void stop() {
         mode = -1;
         reset.setEnabled(true);
-        stopService(new Intent(MainActivity.this, Timer.class));
+        stopService(new Intent(MainActivity.this, TimerService.class));
         timeBuff += millisecondTime;
         sp.edit().putString(TIMEBUFF_KEY, String.valueOf(timeBuff)).apply();
         startStop.setText("Start");
@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         startTime = System.currentTimeMillis();
         sp.edit().putString(STARTTIME_KEY, String.valueOf(startTime)).apply();
         sp.edit().putString(INPUTTIME_KEY, String.valueOf(inputTime)).apply();
-        startService(new Intent(MainActivity.this, Timer.class));
+        startService(new Intent(MainActivity.this, TimerService.class));
         startStop.setText("Stop");
         timer.setEnabled(false);
         sp.edit().putString(MODE_KEY, String.valueOf(mode)).apply();

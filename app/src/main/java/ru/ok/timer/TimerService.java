@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 
-public class Timer extends Service {
+public class TimerService extends Service {
     private boolean run;
     private Intent intent;
 
