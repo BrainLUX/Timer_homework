@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     private int seconds;
     private int minutes;
     private int milliSeconds;
-    private int counter;
     private boolean hidden;
     private SharedPreferences sp;
     private final String SP_NAME = "timer";
@@ -53,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private PendingIntent resultResetIntent;
     private final String TIMER_ID = "timer";
     private NotificationManager notificationManager;
+    private boolean notifyServiceStarted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,6 +185,8 @@ public class MainActivity extends AppCompatActivity {
                 "increaseTimer"));
         this.registerReceiver(notifyReceiver, new IntentFilter(
                 "notify"));
+        this.registerReceiver(notifyReceiver, new IntentFilter(
+                "createNotification"));
     }
 
     public void unregisterBroadcastReceiver() {
@@ -203,19 +205,19 @@ public class MainActivity extends AppCompatActivity {
                 millisecondTime = System.currentTimeMillis() - startTime;
                 updateTime = timeBuff + millisecondTime;
                 timer.setText(secondsToTime(inputTime - updateTime));
-                counter++;
-                if (counter % 100 == 0 && hidden) {
-                    createNotification(false);
-                }
                 if (inputTime - updateTime <= 0) {
                     mode = 1;
-                    if (hidden) {
-                        createNotification(true);
-                    }
                     stop();
                     reset();
                     timer.setText(secondsToTime(inputTime));
+                    if (hidden) {
+                        createNotification(true);
+                    }
                 }
+            }
+            if (hidden && !notifyServiceStarted) {
+                notifyServiceStarted = true;
+                startService(new Intent(MainActivity.this, NotifyService.class));
             }
         }
     }
@@ -241,6 +243,10 @@ public class MainActivity extends AppCompatActivity {
                         reset();
                         startActivity(new Intent(context, MainActivity.class));
                         break;
+                }
+            } else {
+                if (hidden && mode == 1) {
+                    createNotification(false);
                 }
             }
         }
@@ -293,9 +299,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         hidden = true;
-        if (mode == -1) {
-            createNotification(true);
-        }
         super.onPause();
     }
 
@@ -303,6 +306,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         hidden = false;
         notificationManager.cancelAll();
+        notifyServiceStarted = false;
+        stopService(new Intent(MainActivity.this, NotifyService.class));
         super.onResume();
     }
 
