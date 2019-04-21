@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private final String TIMER_ID = "timer";
     private NotificationManager notificationManager;
     private boolean notifyServiceStarted;
+    private boolean registered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void registerBroadcastReceiver() {
+        registered = true;
         this.registerReceiver(timerReceiver, new IntentFilter(
                 "increaseTimer"));
         this.registerReceiver(notifyReceiver, new IntentFilter(
@@ -193,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void unregisterBroadcastReceiver() {
+        registered = false;
         this.unregisterReceiver(timerReceiver);
         this.unregisterReceiver(notifyReceiver);
     }
@@ -303,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         hidden = true;
-        if (mode != 1) {
+        if (mode != 1 && registered) {
             unregisterBroadcastReceiver();
         }
         super.onPause();
@@ -321,7 +324,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        unregisterBroadcastReceiver();
+        if (registered) {
+            unregisterBroadcastReceiver();
+        }
         getIntent().putExtra("refresh", 1);
         sp.edit().putString(REFRESH_KEY, "1").apply();
         notificationManager.cancelAll();
