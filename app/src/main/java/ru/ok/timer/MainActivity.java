@@ -38,9 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private int milliSeconds;
     private boolean hidden;
     private SharedPreferences sp;
-    private final String SP_NAME = "timer";
+    public static final String SP_NAME = "timer";
     private final String STARTTIME_KEY = "startTime";
-    private final String MODE_KEY = "mode";
+    public static final String MODE_KEY = "mode";
     private final String TIMEBUFF_KEY = "timeBuff";
     private final String INPUTTIME_KEY = "inputTime";
     private final String STOP_ACTION = "stop";
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     timer.setText(secondsToTime(timeBuff + System.currentTimeMillis() - startTime));
                     startService(new Intent(MainActivity.this, TimerService.class));
                     reset.setEnabled(false);
-                    startStop.setText("Stop");
+                    startStop.setText(getResources().getText(R.string.stop));
                 } else {
                     timer.setText(secondsToTime(inputTime - timeBuff));
                 }
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(MainActivity.this, TimerService.class));
         timeBuff += millisecondTime;
         sp.edit().putString(TIMEBUFF_KEY, String.valueOf(timeBuff)).apply();
-        startStop.setText("Start");
+        startStop.setText(getResources().getText(R.string.start));
         timer.setEnabled(false);
         sp.edit().putString(MODE_KEY, String.valueOf(mode)).apply();
     }
@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
         sp.edit().putString(STARTTIME_KEY, String.valueOf(startTime)).apply();
         sp.edit().putString(INPUTTIME_KEY, String.valueOf(inputTime)).apply();
         startService(new Intent(MainActivity.this, TimerService.class));
-        startStop.setText("Stop");
+        startStop.setText(getResources().getText(R.string.stop));
         timer.setEnabled(false);
         sp.edit().putString(MODE_KEY, String.valueOf(mode)).apply();
     }
@@ -177,6 +177,8 @@ public class MainActivity extends AppCompatActivity {
         timer.setText(secondsToTime(inputTime));
         timer.setEnabled(true);
         sp.edit().putString(MODE_KEY, String.valueOf(mode)).apply();
+        sp.edit().putString(INPUTTIME_KEY, String.valueOf(inputTime)).apply();
+        stopService(new Intent(MainActivity.this, TimerService.class));
     }
 
 
