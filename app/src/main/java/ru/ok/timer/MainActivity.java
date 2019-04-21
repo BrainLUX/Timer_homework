@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String MODE_KEY = "mode";
     private final String TIMEBUFF_KEY = "timeBuff";
     private final String INPUTTIME_KEY = "inputTime";
+    private final String REFRESH_KEY = "refresh";
     private final String STOP_ACTION = "stop";
     private final String START_ACTION = "start";
     private final String RESET_ACTION = "reset";
@@ -89,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getExtra() {
         Bundle extras = getIntent().getExtras();
-        if (extras != null) {
+        if (extras != null || sp.getString(REFRESH_KEY, "0").equals("1")) {
             startTime = Long.parseLong(sp.getString(STARTTIME_KEY, "0"));
             mode = Byte.parseByte(sp.getString(MODE_KEY, "0"));
             timeBuff = Long.parseLong(sp.getString(TIMEBUFF_KEY, "0"));
@@ -213,7 +214,8 @@ public class MainActivity extends AppCompatActivity {
                     reset();
                     timer.setText(secondsToTime(inputTime));
                     if (hidden) {
-                        createNotification(true);
+                        notificationManager.cancelAll();
+                        unregisterBroadcastReceiver();
                     }
                 }
             }
@@ -301,6 +303,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         hidden = true;
+        if (mode != 1) {
+            unregisterBroadcastReceiver();
+        }
         super.onPause();
     }
 
@@ -310,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
         notificationManager.cancelAll();
         notifyServiceStarted = false;
         stopService(new Intent(MainActivity.this, NotifyService.class));
+        registerBroadcastReceiver();
         super.onResume();
     }
 
@@ -317,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         unregisterBroadcastReceiver();
         getIntent().putExtra("refresh", 1);
+        sp.edit().putString(REFRESH_KEY, "1").apply();
         notificationManager.cancelAll();
         super.onDestroy();
     }
