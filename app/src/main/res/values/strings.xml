@@ -4,4 +4,6 @@
     <string name="reset">reset</string>
     <string name="start">start</string>
     <string name="stop">stop</string>
+    <string name="timer_started">Таймер запущен</string>
+    <string name="timer_paused">Таймер на паузе</string>
 </resources>
