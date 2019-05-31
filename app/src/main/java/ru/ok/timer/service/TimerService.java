@@ -17,7 +17,6 @@ import ru.ok.timer.timer.Timer;
 import ru.ok.timer.reciever.NotificationReceiver;
 
 public class TimerService extends Service {
-    private NotificationManager notificationManager;
     private static final int FOREGROUND_ID = 1;
     public static final String STOP_ACTION = "stop";
     public static final String START_ACTION = "start";
@@ -82,8 +81,6 @@ public class TimerService extends Service {
                 Timer.startTimer(null);
             }
         }
-        notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
     public void onDestroy() {
