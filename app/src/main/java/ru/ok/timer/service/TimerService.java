@@ -18,6 +18,7 @@ import ru.ok.timer.reciever.NotificationReceiver;
 
 public class TimerService extends Service {
     private NotificationManager notificationManager;
+    private static final int FOREGROUND_ID = 1;
     public static final String STOP_ACTION = "stop";
     public static final String START_ACTION = "start";
     public static final String RESET_ACTION = "reset";
@@ -55,7 +56,7 @@ public class TimerService extends Service {
                                 .addAction(R.drawable.ic_notification_timer, getResources().getString(R.string.reset), resultResetIntent)
                                 .setContentIntent(resultPendingIntent);
                 Notification notification = builder.build();
-                notificationManager.notify(1, notification);
+                startForeground(FOREGROUND_ID, notification);
                 handler.postDelayed(this, 1000);
             }
         };
