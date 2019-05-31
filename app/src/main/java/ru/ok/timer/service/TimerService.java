@@ -47,12 +47,12 @@ public class TimerService extends Service {
                 }
                 NotificationCompat.Builder builder =
                         new NotificationCompat.Builder(TimerService.this, App.TIMER_ID)
-                                .setSmallIcon(R.mipmap.ic_launcher)
+                                .setSmallIcon(R.drawable.ic_notification_timer)
                                 .setContentTitle(Timer.isStarted() ? getResources().getString(R.string.timer_started) : getResources().getString(R.string.timer_paused))
                                 .setContentText(MainActivity.secondsToTime(Timer.getTime(), true))
-                                .addAction(R.mipmap.ic_launcher, Timer.isStarted() ? getResources().getString(R.string.stop) : getResources().getString(R.string.start),
+                                .addAction(R.drawable.ic_notification_timer, Timer.isStarted() ? getResources().getString(R.string.stop) : getResources().getString(R.string.start),
                                         Timer.isStarted() ? resultStopIntent : resultStartIntent)
-                                .addAction(R.mipmap.ic_launcher, getResources().getString(R.string.reset), resultResetIntent)
+                                .addAction(R.drawable.ic_notification_timer, getResources().getString(R.string.reset), resultResetIntent)
                                 .setContentIntent(resultPendingIntent);
                 Notification notification = builder.build();
                 notificationManager.notify(1, notification);
