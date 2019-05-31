@@ -44,6 +44,7 @@ public class TimerService extends Service {
                 }
                 if (Timer.isEnded()) {
                     Timer.resetTimer();
+                    stopForeground(true);
                 }
                 NotificationCompat.Builder builder =
                         new NotificationCompat.Builder(TimerService.this, App.TIMER_ID)
